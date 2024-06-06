@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Identifikasi Werewolf</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/bg.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1200px;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+            background: #fff;
+            margin-top: 50px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 10px;
+            }
+
+            input[type="text"], input[type="number"], select, button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Identifikasi Werewolf</h1>
+        <form id="identify-form">
+            <label for="players">Nama Pemain (dipisahkan dengan koma):</label>
+            <input type="text" id="players" name="players">
+            <label for="num_werewolves">Jumlah Werewolf:</label>
+            <input type="number" id="num_werewolves" name="num_werewolves" min="1">
+            <label for="method">Metode:</label>
+            <select id="method" name="method">
+                <option value="greedy">Greedy</option>
+                <option value="brute_force">Brute Force</option>
+            </select>
+            <button type="button" onclick="identifyWerewolves()">Identifikasi Werewolf</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        async function identifyWerewolves() {
+            const players = document.getElementById('players').value.split(',').map(player => player.trim());
+            const num_werewolves = parseInt(document.getElementById('num_werewolves').value);
+            const method = document.getElementById('method').value;
+
+            if (players.length < 4) {
+                alert('Jumlah pemain tidak boleh kurang dari 4');
+                return;
+            }
+
+            if (players.length > 10) {
+                alert('Jumlah pemain tidak boleh lebih dari 10');
+                return;
+            }
+
+            const maxWerewolves = players.length / 2;
+            if (num_werewolves > maxWerewolves) {
+                alert('Melebihi batas maksimum werewolf');
+                return;
+            }
+
+            const data = {
+                players: players,
+                num_werewolves: num_werewolves,
+                method: method
+            };
+
+            const response = await fetch('/identify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                displayResult(result);
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        }
+
+        function displayResult(result) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2>Langkah-langkah Algoritma:</h2>
+                <p>${result.algorithm_steps.join('<br>')}</p>
+                <h2>Langkah Pemain:</h2>
+                <p>${result.steps.join('<br>')}</p>
+                <h2>Jalur Terdekat:</h2>
+                <p>${result.shortest_path.join(' -> ')}</p>
+                <h2>Werewolf yang Diidentifikasi:</h2>
+                <p>${result.identified_werewolves.join(', ')}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
